@@ -3,7 +3,7 @@
 
 #include "tools.hpp"
 #include <deque>
-#include <sensor_msgs/Imu.h>
+#include <sensor_msgs/msg/imu.hpp>
 
 class IMUEKF
 {
@@ -13,7 +13,7 @@ public:
   double pcl_beg_time, pcl_end_time, last_pcl_end_time;
   int init_num;
   Eigen::Vector3d mean_acc, mean_gyr;
-  sensor_msgs::Imu::Ptr last_imu;
+  sensor_msgs::msg::Imu::Ptr last_imu;
   int min_init_num = 30;
   Eigen::Vector3d angvel_last, acc_s_last;
 
@@ -38,7 +38,7 @@ public:
     angvel_last.setZero(); acc_s_last.setZero();
   }
 
-  void motion_blur(IMUST &xc, pcl::PointCloud<PointType> &pcl_in, deque<sensor_msgs::Imu::Ptr> &imus)
+  void motion_blur(IMUST &xc, pcl::PointCloud<PointType> &pcl_in, deque<sensor_msgs::msg::Imu::Ptr> &imus)
   {
     imus.push_front(last_imu);
 
@@ -58,8 +58,8 @@ public:
     double dt = 0;
     for(auto it_imu=imus.begin(); it_imu!=imus.end()-1; it_imu++)
     {
-      sensor_msgs::Imu &head = **(it_imu);
-      sensor_msgs::Imu &tail = **(it_imu+1);
+      sensor_msgs::msg::Imu &head = **(it_imu);
+      sensor_msgs::msg::Imu &tail = **(it_imu+1);
 
       if(tail.header.stamp.toSec() < last_pcl_end_time) continue;
 
@@ -122,8 +122,8 @@ public:
     xc.p = pos_imu + note * vel_imu * dt + note * 0.5 * acc_imu * dt * dt;
     xc.t = pcl_end_time;
 
-    sensor_msgs::ImuPtr imu1(new sensor_msgs::Imu(*imus.front()));
-    sensor_msgs::ImuPtr imu2(new sensor_msgs::Imu(*imus.back()));
+    sensor_msgs::msg::Imu::Ptr imu1(new sensor_msgs::msg::Imu(*imus.front()));
+    sensor_msgs::msg::Imu::Ptr imu2(new sensor_msgs::msg::Imu(*imus.back()));
     imu1->header.stamp.fromSec(last_pcl_end_time);
     imu2->header.stamp.fromSec(pcl_end_time);
     // imus.pop_front();
@@ -164,10 +164,10 @@ public:
 
   }
 
-  void IMU_init(deque<sensor_msgs::Imu::Ptr> &imus)
+  void IMU_init(deque<sensor_msgs::msg::Imu::Ptr> &imus)
   {
     Eigen::Vector3d cur_acc, cur_gyr;
-    for(sensor_msgs::Imu::Ptr imu: imus)
+    for(sensor_msgs::Imu::msg::Ptr imu: imus)
     {
       cur_acc << imu->linear_acceleration.x,
                  imu->linear_acceleration.y,
@@ -194,7 +194,7 @@ public:
     last_imu = imus.back();
   }
 
-  int process(IMUST &x_curr, pcl::PointCloud<PointType> &pcl_in, deque<sensor_msgs::Imu::Ptr> &imus)
+  int process(IMUST &x_curr, pcl::PointCloud<PointType> &pcl_in, deque<sensor_msgs::msg::Imu::Ptr> &imus)
   {
     if(!init_flag)
     {
